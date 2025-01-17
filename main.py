@@ -365,6 +365,18 @@ def mass_check_rebuild(filename, log=False) -> bool:
         print("All files can be rebuilt")
     return True
 
+def find_all_occurrences(text : str, filelist: str):
+    lines = fh.get_lines(filelist)
+    for line in lines:
+        messages = fh.get_messages(line)
+        for message in messages.values():
+            content : str = '\n'.join(message.text)
+            reg : str = get_regex(text)
+            matches = [m.start() for m in re.finditer(reg, content.lower())]
+            if len(matches) > 0:
+                print(line)
+                print(content)
+
 if __name__ == "__main__":
     # check_leftover()
     # replace_easy(MALE_FEMALE, "text\\indexed.txt")
@@ -374,7 +386,7 @@ if __name__ == "__main__":
     # manually_replace(NEUTRAL_MANUAL, log="text\\manual_neutral.log")
     # reset_output()
     # generate_paths_file("message", True)
-    # find_all_occurrences("if someone like you were to become queen", "text/output_paths.txt")
+    find_all_occurrences("sword", "text/output_paths.txt")
     # write_word_counts("text/paths.txt")
     # write_unique_words("text/paths.txt")
     # print(count_all_occurrences("princesss", "text/paths.txt"))

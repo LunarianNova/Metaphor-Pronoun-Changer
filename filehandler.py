@@ -10,6 +10,7 @@ def get_lines(filename) -> list[str]:
             lines = file.read().split("\n")
             lines = [x for x in lines if x != ""]
     except FileNotFoundError:
+        print(f"File {filename} does not exist!")
         lines = []
     return lines 
 
