@@ -1,76 +1,72 @@
-import re
-
 class Message:
-    def __init__(self, message):
-        self.original = message
-        self.speaker_id = None
-        self.id = None
-        self.text = None
-        self.built = None
-        self.parse_text(message)
+    __slots__ = ['__original', '__id', '__lines', '__text', '__speaker']
 
-    def parse_text(self, message):
+    def __init__(self, message : str) -> None:
+        self.__original : str  = message
+        self.__id       : str  = None
+        self.__lines    : list = []
+        self.__text     : str  = None
+        self.__speaker  : str  = None
+        self.__parse_text()
+
+    def __parse_text(self) -> None:
+        message = self.__original
         for line in message.split("\n"):
             if line.startswith("#SPEAKER_ID"):
-                self.speaker_id = line
+                self.__speaker = line
             elif line.startswith("@"):
-                self.id = line if self.id is None else self.id
-        self.text = [line for line in message.split("{")[1].split("\n")[1:-1]]
+                self.__id = line if self.__id is None else self.__id
+            self.__lines.append(line)
+        content : str = message.split("{")[1]
+        content = '\n'.join(content.split("\n")[1:-1])
+        self.__text = content
 
-    def rebuild(self):
-        self.built = "//--------------------------\n"
-        self.built += self.speaker_id +"\n" if self.speaker_id else ""
-        self.built += self.id + "\n" if self.id else ""
-        self.built += "{\n"
-        for line in self.text:
-            self.built += line + "\n"
-        self.built += "}"
+    def get_lines(self) -> list:
+        return self.__lines
 
-        tokens = self.built.split("\n")
-        if tokens[-1] == "}" and tokens[-2] == "}":
-            tokens = tokens[:-1]
-            self.built = "\n".join(tokens)
+    def get_original(self) -> str:
+        return self.__original
+    
+    def get_id(self) -> str:
+        return self.__id
 
-def get_messages(filename) -> dict[str, Message]:
-    """
-    Takes a filename as an input
-    The file should be a file from Metaphor, that contains messages
-    It then returns a list of those messages, as objects
-    """
-    message_objects = {}
-    try:
-        with open(filename) as file:
-            lines = file.read().split("\n")
+    def get_text(self) -> str:
+        return self.__text
+    
+    def get_speaker(self) -> str:
+        return self.__speaker
+
+class MessageFile:
+    __slots__ = ['__messages', '__path']
+
+    def __init__(self, filepath : str) -> None:
+        self.__messages : dict[str, Message] = {}
+        self.__path     : str                = filepath
+        self.__add_messages()
+
+    def __add_messages(self) -> None:
+        with open(self.__path) as file:
+            lines : list = file.read().split("\n")
             lines = [x for x in lines if x != ""]
-    except FileNotFoundError:
-        lines = []
+        if "//--------------------------" in lines:
+            # Remove any leading lines
+            lines = lines[lines.index("//--------------------------"):]
+            # Split file into the messages
+            messages : list = "\n".join(lines).split("//--------------------------")[1:]
 
-    try:
-        lines = lines[lines.index("//--------------------------"):]
-        # Split file into the messages
-        messages = "\n".join(lines).split("//--------------------------")[1:]
-
-        # Create message objects
-        for raw_message in messages:
-            obj = Message("//--------------------------" + raw_message)
-            obj.rebuild()
-            message_objects[obj.id] = obj
-
-    except ValueError:
-        pass    
-
-    return message_objects
-
-def print_message(messages, id) -> None:
-    """
-    Helper to print message info
-    """
-    index = messages.index(id)
-    for i in range(index-2, index+1):
-        message = list(messages.keys())[i]
-        title = message.title
-        text = "\n".join(message.text)
-        if title:
-            print(title + " - " + text)
+            # Create message objects
+            for raw_message in messages:
+                obj : Message = Message("//--------------------------" + raw_message)
+                self.__messages[obj.get_id()] = obj
+        
         else:
-            print(text)   
+            print(self.__path + " cannot be converted into messages!")
+
+    def get_path(self) -> str:
+        return self.__path
+
+    def get_messages(self) -> dict[str, Message]:
+        return self.__messages
+
+if __name__ == "__main__":
+    messages = MessageFile("output\\message\\battle\\event\\BE_0601.msg")
