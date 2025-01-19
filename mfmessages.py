@@ -33,11 +33,22 @@ class Message:
         text = '\n'.join(text.split("\n")[1:-1])
         self.__text = text
 
+    def __build(self) -> None:
+        """
+        Build the message back to the proper format, including any changes
+        """
+        text_start : int = self.__lines.index("{")
+        text_end : int = self.__lines.index("}")
+        for i in range(text_start+1, text_end):
+            self.__lines.pop(i)
+        for i, line in enumerate(self.__text.split("\n")):
+            self.__lines.insert(text_start + 1 + i, line)
+
     def __replace_word(self, word: str, replacement: str, index: int) -> None:
         """
         The actual replace function :)
         """
-        reg = get_regex(word)
+        reg : str = get_regex(word)
         # <HERO_NAME> is a variable and must stay capital
         if replacement != "<HERO_NAME>":
             word_case : list = []
@@ -62,6 +73,7 @@ class Message:
 
             # Update the text to have the new word
             self.__text = self.__text[:start_index] + new_word + self.__text[start_index + len(word):]
+            self.__build()
 
     def replace_word(self, word: str, replacement: str, index: int = -1) -> None:
         """
@@ -69,8 +81,8 @@ class Message:
         use index = -1 to replace all occurrences
         """
         if index == -1:
-            reg = get_regex(word)
-            count = len([m.start() for m in re.finditer(reg, self.__text.lower())])
+            reg : str = get_regex(word)
+            count : int = len([m.start() for m in re.finditer(reg, self.__text.lower())])
             for i in range(count):
                 self.__replace_word(word, replacement, i)
         else:
@@ -145,6 +157,7 @@ class MessageFile:
         Returns a raw text file with all messages
         """
         content : str = ""
+        # If there is content before the main content (messages), add that
         if self.__lines[0] != "//--------------------------":
             for i in range(self.__lines.index("//--------------------------")):
                 content += self.__lines[i] + "\n"
