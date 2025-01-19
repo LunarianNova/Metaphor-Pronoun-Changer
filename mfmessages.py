@@ -18,6 +18,12 @@ class Message:
         self.__built    : str  = message
         self.__parse_text()
 
+    def __str__(self) -> str:
+        """
+        Returns the text of the message
+        """
+        return self.__text
+
     def __parse_text(self) -> None:
         """
         Parses the message into all of the attributes
@@ -39,10 +45,11 @@ class Message:
         """
         text_start : int = self.__lines.index("{")
         text_end : int = self.__lines.index("}")
-        for i in range(text_start+1, text_end):
-            self.__lines.pop(i)
+        for _ in range(text_start+1, text_end):
+            self.__lines.pop(text_start+1)
         for i, line in enumerate(self.__text.split("\n")):
             self.__lines.insert(text_start + 1 + i, line)
+        self.__built = "\n".join(self.__lines)
 
     def __replace_word(self, word: str, replacement: str, index: int) -> None:
         """
@@ -125,13 +132,28 @@ class Message:
         return self.__built
 
 class MessageFile:
-    __slots__ = ['__lines', '__messages', '__path']
+    __slots__ = ['__index', '__lines', '__messages', '__path']
 
     def __init__(self, filepath : str) -> None:
+        self.__index    : int                = 0
         self.__lines    : list               = None
         self.__messages : dict[str, Message] = {}
         self.__path     : str                = filepath
         self.__add_messages()
+
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        try:
+            result = list(self.__messages.values())[self.__index]
+        except IndexError:
+            raise StopIteration
+        self.__index += 1
+        return result
+    
+    def __len__(self):
+        return len(self.__messages.values())
 
     def __add_messages(self) -> None:
         with open(self.__path) as file:
@@ -222,6 +244,9 @@ class MessageFile:
         return self.__messages
 
 if __name__ == "__main__":
-    with open("output\\message\\battle\\event\\BE_0601.msg") as f:
-        messages = MessageFile("output\\message\\battle\\event\\BE_0601.msg")
-        assert messages.compile_file() == f.read()
+    with open("C:\\Users\\Yukiko\\Downloads\\Metaphor Modding\\Tools\\Python Tools\\Pronoun Tools\\output\\message\\event\\e01_002_001.msg") as f:
+        messages = MessageFile("C:\\Users\\Yukiko\\Downloads\\Metaphor Modding\\Tools\\Python Tools\\Pronoun Tools\\output\\message\\event\\e01_002_001.msg")
+        for message in messages:
+            message.replace_word("she", "he")
+            print(message.get_original())
+            print(message.get_built())
