@@ -141,10 +141,13 @@ class MessageFile:
         self.__path     : str                = filepath
         self.__add_messages()
 
+    def __getitem__(self, message_id: str) -> Message:
+        return self.__messages[message_id]
+
     def __iter__(self):
         return self
     
-    def __next__(self):
+    def __next__(self) -> Message:
         try:
             result = list(self.__messages.values())[self.__index]
         except IndexError:
@@ -152,7 +155,7 @@ class MessageFile:
         self.__index += 1
         return result
     
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.__messages.values())
 
     def __add_messages(self) -> None:
@@ -230,6 +233,20 @@ class MessageFile:
         compiled = self.__compile_modified_file()
         with open(path, "w") as f:
             f.write(compiled)
+
+    def replace_word_in_messages(self, word: str, replacement: str) -> None:
+        """
+        Replace all occurrences of a word in every single message in the file
+        """
+        for message in self.__messages.values():
+            message.replace_word(word, replacement, index=-1)
+
+    def get_message_at_index(self, index: int):
+        """
+        Gets a message by how many messages it is into the file,
+        rather than obtaining by id
+        """
+        return list(self.__messages.values())[index]
 
     def get_path(self) -> str:
         """
